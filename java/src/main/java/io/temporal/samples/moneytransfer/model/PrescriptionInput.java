@@ -1,6 +1,5 @@
 package io.temporal.samples.moneytransfer.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,12 +7,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties({"scenario"})
-public class ScheduleParameters {
+public class PrescriptionInput {
+
     private String prescriptionId;
     private String patientId;
     private String medicationName;
     private int quantity;
-    private int interval;
-    private int count;
+    private String doctorId;
+    private String pharmacyId;
+    private String insuranceId;
 }

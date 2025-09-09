@@ -8,10 +8,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UXParameters {
-    private int amount;
+    private String prescriptionId;
+    private String patientId;
+    private String medicationName;
+    private int quantity;
+    private String doctorId;
+    private String pharmacyId;
+    private String insuranceId;
     private ExecutionScenario scenario;
 
-    public TransferInput toTransferInput() {
-        return new TransferInput(this.amount, "fromAccount", "toAccount");
+    public PrescriptionInput toPrescriptionInput() {
+        return new PrescriptionInput(this.prescriptionId, this.patientId, this.medicationName,
+                                   this.quantity, this.doctorId, this.pharmacyId, this.insuranceId);
     }
 }

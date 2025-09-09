@@ -9,9 +9,9 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
 import io.temporal.samples.moneytransfer.helper.ServerInfo;
 import io.temporal.samples.moneytransfer.model.ExecutionScenario;
-import io.temporal.samples.moneytransfer.model.TransferInput;
-import io.temporal.samples.moneytransfer.model.TransferOutput;
-import io.temporal.samples.moneytransfer.model.TransferStatus;
+import io.temporal.samples.moneytransfer.model.PrescriptionInput;
+import io.temporal.samples.moneytransfer.model.PrescriptionOutput;
+import io.temporal.samples.moneytransfer.model.PrescriptionStatus;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 
 import javax.net.ssl.SSLException;
@@ -19,23 +19,23 @@ import java.io.FileNotFoundException;
 
 import static io.temporal.samples.moneytransfer.TemporalClient.getWorkflowServiceStubsWithHeaders;
 
-public class TransferRequester {
+public class PrescriptionRequester {
 
-    public static TransferOutput getWorkflowOutcome(String workflowId) throws FileNotFoundException, SSLException {
+    public static PrescriptionOutput getWorkflowOutcome(String workflowId) throws FileNotFoundException, SSLException {
         WorkflowClient client = TemporalClient.get();
         WorkflowStub workflowStub = client.newUntypedWorkflowStub(workflowId);
 
         // Returns the result after waiting for the Workflow to complete.
-        TransferOutput result = workflowStub.getResult(TransferOutput.class);
+        PrescriptionOutput result = workflowStub.getResult(PrescriptionOutput.class);
         return result;
     }
 
-    public static TransferStatus runQuery(String workflowId) throws FileNotFoundException, SSLException {
+    public static PrescriptionStatus runQuery(String workflowId) throws FileNotFoundException, SSLException {
         WorkflowClient client = TemporalClient.get();
         System.out.println("Workflow STATUS: " + getWorkflowStatus(workflowId));
 
         WorkflowStub workflowStub = client.newUntypedWorkflowStub(workflowId);
-        TransferStatus result = workflowStub.query("transferStatus", TransferStatus.class);
+        PrescriptionStatus result = workflowStub.query("prescriptionStatus", PrescriptionStatus.class);
         if ("WORKFLOW_EXECUTION_STATUS_FAILED".equals(getWorkflowStatus(workflowId))) {
             result.setWorkflowStatus("FAILED");
         }
@@ -46,13 +46,13 @@ public class TransferRequester {
         try {
             WorkflowClient client = TemporalClient.get();
             WorkflowStub workflowStub = client.newUntypedWorkflowStub(workflowId);
-            workflowStub.signal("approveTransfer");
+            workflowStub.signal("approvePrescription");
         } catch (Exception e) {
             System.out.println("Exception: " + e);
         }
     }
 
-    public static String runWorkflow(TransferInput transferInput, ExecutionScenario scenario)
+    public static String runWorkflow(PrescriptionInput prescriptionInput, ExecutionScenario scenario)
             throws FileNotFoundException, SSLException {
         String referenceNumber = generateReferenceNumber(); // random reference number
         WorkflowClient client = TemporalClient.get();
@@ -62,23 +62,24 @@ public class TransferRequester {
                 .setWorkflowId(referenceNumber)
                 .setTaskQueue(TASK_QUEUE)
                 .build();
-        WorkflowStub transferWorkflow = client.newUntypedWorkflowStub(workflowType, options);
-        transferWorkflow.start(transferInput);
-        System.out.printf("\n\nTransfer of $%d requested\n", transferInput.getAmount());
+        WorkflowStub prescriptionWorkflow = client.newUntypedWorkflowStub(workflowType, options);
+        prescriptionWorkflow.start(prescriptionInput);
+        System.out.printf("\n\nPrescription fulfillment for %s (quantity: %d) requested\n", 
+                         prescriptionInput.getMedicationName(), prescriptionInput.getQuantity());
         return referenceNumber;
     }
 
     @SuppressWarnings("CatchAndPrintStackTrace")
     public static void main(String[] args) throws Exception {
-        int amountCents = 45; // amount to transfer
-        TransferInput params = new TransferInput(amountCents, "account1", "account2");
+        PrescriptionInput params = new PrescriptionInput("RX12345", "PAT001", "Amoxicillin", 
+                                                       30, "DR001", "PHARM001", "INS001");
         runWorkflow(params, ExecutionScenario.HAPPY_PATH);
         System.exit(0);
     }
 
     private static String generateReferenceNumber() {
         return String.format(
-                "TRANSFER-%s-%03d",
+                "PRESCRIPTION-%s-%03d",
                 (char) (Math.random() * 26 + 'A') +
                         "" +
                         (char) (Math.random() * 26 + 'A') +

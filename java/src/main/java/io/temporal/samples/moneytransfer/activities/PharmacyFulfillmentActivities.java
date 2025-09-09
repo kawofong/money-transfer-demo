@@ -4,15 +4,15 @@ import io.temporal.activity.ActivityInterface;
 import io.temporal.activity.ActivityMethod;
 import io.temporal.activity.ActivityOptions;
 import io.temporal.common.RetryOptions;
-import io.temporal.samples.moneytransfer.model.DepositResponse;
-import io.temporal.samples.moneytransfer.model.TransferInput;
+import io.temporal.samples.moneytransfer.model.AdjudicationResponse;
+import io.temporal.samples.moneytransfer.model.PrescriptionInput;
 
 import java.time.Duration;
 
 @ActivityInterface
-public interface AccountTransferActivities {
+public interface PharmacyFulfillmentActivities {
     ActivityOptions activityOptions = ActivityOptions.newBuilder()
-            .setStartToCloseTimeout(Duration.ofSeconds(5))
+            .setStartToCloseTimeout(Duration.ofSeconds(10))
             .setRetryOptions(
                     RetryOptions.newBuilder()
                             .setInitialInterval(Duration.ofSeconds(1))
@@ -23,17 +23,17 @@ public interface AccountTransferActivities {
             .build();
 
     @ActivityMethod
-    String validate(TransferInput input);
+    String verifyOrder(PrescriptionInput input);
 
     @ActivityMethod
-    String withdraw(String idempotencyKey, float amount, String type);
+    String loadPrescriptionToPharmacySystem(String idempotencyKey, PrescriptionInput input, String type);
 
     @ActivityMethod
-    DepositResponse deposit(String idempotencyKey, float amount, String type);
+    AdjudicationResponse adjudication(String idempotencyKey, PrescriptionInput input, String type);
 
     @ActivityMethod
-    String sendNotification(TransferInput input);
+    String notifyCustomer(PrescriptionInput input);
 
     @ActivityMethod
-    boolean undoWithdraw(float amount);
+    boolean reversePharmacySystemLoad(PrescriptionInput input);
 }

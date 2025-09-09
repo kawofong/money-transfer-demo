@@ -8,9 +8,9 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static io.temporal.samples.moneytransfer.TransferLister.listWorkflows;
-import static io.temporal.samples.moneytransfer.TransferRequester.*;
-import static io.temporal.samples.moneytransfer.TransferScheduler.runSchedule;
+import static io.temporal.samples.moneytransfer.PrescriptionLister.listWorkflows;
+import static io.temporal.samples.moneytransfer.PrescriptionRequester.*;
+import static io.temporal.samples.moneytransfer.PrescriptionScheduler.runSchedule;
 
 public class WebServer {
 
@@ -28,23 +28,23 @@ public class WebServer {
 
         app.post("/runWorkflow", ctx -> {
             UXParameters uxParameters = ctx.bodyAsClass(UXParameters.class);
-            TransferInput transferInput = uxParameters.toTransferInput();
-            String transferId = runWorkflow(transferInput, uxParameters.getScenario());
-            ctx.json(new AbstractMap.SimpleEntry<>("transferId", transferId));
+            PrescriptionInput prescriptionInput = uxParameters.toPrescriptionInput();
+            String prescriptionId = runWorkflow(prescriptionInput, uxParameters.getScenario());
+            ctx.json(new AbstractMap.SimpleEntry<>("prescriptionId", prescriptionId));
         });
 
         app.post("/scheduleWorkflow", ctx -> {
             ScheduleParameters scheduleParameters = ctx.bodyAsClass(ScheduleParameters.class);
-            String transferId = runSchedule(scheduleParameters);
-            ctx.json(new AbstractMap.SimpleEntry<>("transferId", transferId));
+            String prescriptionId = runSchedule(scheduleParameters);
+            ctx.json(new AbstractMap.SimpleEntry<>("prescriptionId", prescriptionId));
         });
 
         app.post("/runQuery", ctx -> {
             // get workflowId from request POST body
             WorkflowId workflowIdObj = ctx.bodyAsClass(WorkflowId.class);
             String workflowId = workflowIdObj.getWorkflowId();
-            TransferStatus transferState = runQuery(workflowId);
-            ctx.json(transferState);
+            PrescriptionStatus prescriptionState = runQuery(workflowId);
+            ctx.json(prescriptionState);
         });
 
         app.post("/getWorkflowOutcome", ctx -> {
@@ -55,7 +55,7 @@ public class WebServer {
 
             // get workflowId from request POST body
             String workflowId = ctx.formParam("workflowId");
-            TransferOutput workflowOutcome = getWorkflowOutcome(workflowId);
+            PrescriptionOutput workflowOutcome = getWorkflowOutcome(workflowId);
             ctx.json(workflowOutcome);
         });
 
@@ -78,7 +78,7 @@ public class WebServer {
             }
         });
 
-        app.post("/approveTransfer", ctx -> {
+        app.post("/approvePrescription", ctx -> {
             // get workflowId from request POST body
             WorkflowId workflowIdObj = ctx.bodyAsClass(WorkflowId.class);
             String workflowId = workflowIdObj.getWorkflowId();

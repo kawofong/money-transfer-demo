@@ -36,7 +36,7 @@ test {
 }
 
 application {
-    mainClass = 'io.temporal.samples.moneytransfer.AccountTransferWorker'
+    mainClass = 'io.temporal.samples.moneytransfer.PharmacyFulfillmentWorker'
 }
 
 task execute(type: JavaExec) {

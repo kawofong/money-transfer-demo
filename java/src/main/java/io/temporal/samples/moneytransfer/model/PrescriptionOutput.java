@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransferOutput {
-    private ChargeResponse chargeResponse;
+public class PrescriptionOutput {
+
+    private AdjudicationResponse adjudicationResponse;
+    private String fulfillmentStatus;
+    private String pickupLocation;
 }

@@ -23,14 +23,14 @@ import java.util.List;
 
 import static io.temporal.samples.moneytransfer.TemporalClient.getWorkflowServiceStubs;
 
-public class TransferLister {
+public class PrescriptionLister {
 
     public static List<WorkflowStatus> listWorkflows() throws FileNotFoundException, SSLException {
         WorkflowClient client = TemporalClient.get();
 
         List<WorkflowExecutionMetadata> responseOpen = client.listExecutions(
                 "ExecutionStatus = 'Running'" +
-                "AND WorkflowType STARTS_WITH 'AccountTransferWorkflow'" +
+                "AND WorkflowType STARTS_WITH 'PharmacyFulfillmentWorkflow'" +
                 "AND StartTime BETWEEN '" +
                 timeStampToString(getOneHourAgo()) +
                 "'" +
@@ -41,7 +41,7 @@ public class TransferLister {
 
         List<WorkflowExecutionMetadata> responseClosed = client.listExecutions(
         "ExecutionStatus != 'Running'" +
-                "AND WorkflowType STARTS_WITH 'AccountTransferWorkflow'" +
+                "AND WorkflowType STARTS_WITH 'PharmacyFulfillmentWorkflow'" +
                 "AND StartTime BETWEEN '" +
                 timeStampToString(getOneHourAgo()) +
                 "'" +
