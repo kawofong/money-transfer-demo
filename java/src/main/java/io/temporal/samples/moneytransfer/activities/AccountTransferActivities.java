@@ -23,17 +23,17 @@ public interface AccountTransferActivities {
             .build();
 
     @ActivityMethod
-    String validate(TransferInput input);
+    String validateServiceRequest(TransferInput input);
 
     @ActivityMethod
-    String withdraw(String idempotencyKey, float amount, String type);
+    String reserveResources(String idempotencyKey, float amount, String type);
 
     @ActivityMethod
-    DepositResponse deposit(String idempotencyKey, float amount, String type);
+    DepositResponse configureService(String idempotencyKey, float amount, String type);
 
     @ActivityMethod
-    String sendNotification(TransferInput input);
+    String activateService(TransferInput input);
 
     @ActivityMethod
-    boolean undoWithdraw(float amount);
+    boolean undoReservation(float amount);
 }

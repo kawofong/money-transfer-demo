@@ -26,23 +26,23 @@ public class AccountTransferWorkflowImpl implements AccountTransferWorkflow {
     @Override
     public TransferOutput transfer(TransferInput input) {
         String type = Workflow.getInfo().getWorkflowType();
-        log.info("Account Transfer workflow started, type = {}", type);
+        log.info("Service Provisioning workflow started, type = {}", type);
         String idempotencyKey = Workflow.randomUUID().toString();
 
-        // Validate
-        activities.validate(input);
+        // Validate Service Request
+        activities.validateServiceRequest(input);
         updateProgress(25, 1);
 
-        // Withdraw
-        activities.withdraw(idempotencyKey, input.getAmount(), type);
+        // Reserve Resources
+        activities.reserveResources(idempotencyKey, input.getAmount(), type);
         updateProgress(50, 3);
 
-        // Deposit
-        depositResponse = activities.deposit(idempotencyKey, input.getAmount(), type);
+        // Configure Service
+        depositResponse = activities.configureService(idempotencyKey, input.getAmount(), type);
         updateProgress(75, 1);
 
-        // Send Notification
-        activities.sendNotification(input);
+        // Activate Service
+        activities.activateService(input);
         updateProgress(100, 1, "finished");
 
         return new TransferOutput(depositResponse);

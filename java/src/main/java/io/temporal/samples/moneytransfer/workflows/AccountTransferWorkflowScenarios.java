@@ -41,20 +41,25 @@ public class AccountTransferWorkflowScenarios implements DynamicWorkflow {
         Workflow.registerListener(new AccountTransferDynamicListenerImpl());
         TransferInput input = args.get(0, TransferInput.class);
         String type = Workflow.getInfo().getWorkflowType();
-        log.info("Dynamic Account Transfer workflow started, type = {}", type);
+        log.info("Dynamic Service Provisioning workflow started, type = {}", type);
         String idempotencyKey = Workflow.randomUUID().toString();
 
-        // Validate
-        upsertStep("Validate");
-        activities.validate(input);
+        // Validate Service Request
+        upsertStep("Validate Service Request");
+        activities.validateServiceRequest(input);
         updateProgress(25, 1);
+
+        // Reserve Resources
+        upsertStep("Reserve Resources");
+        activities.reserveResources(idempotencyKey, input.getAmount(), type);
+        updateProgress(50, 3);
 
         if (NEEDS_APPROVAL.equals(type)) {
             log.info(
-                "Waiting on 'approveTransfer' Signal or Update for workflow ID: {}",
+                "Waiting for customer acknowledgment (modem plugged in, SIM activated) for workflow ID: {}",
                 Workflow.getInfo().getWorkflowId()
             );
-            updateProgress(30, 0, "waiting");
+            updateProgress(60, 0, "waiting");
 
             // Wait for the approval for up to approvalTime
             boolean receivedApproval = Workflow.await(Duration.ofSeconds(approvalTime), () -> approved);
@@ -62,46 +67,41 @@ public class AccountTransferWorkflowScenarios implements DynamicWorkflow {
             // If the approval was not received within the timeout, fail the workflow
             if (!receivedApproval) {
                 log.error(
-                    "Approval not received within the {}-second time window: Failing the workflow.",
+                    "Customer acknowledgment not received within the {}-second time window: Failing the workflow.",
                     approvalTime
                 );
                 throw ApplicationFailure.newFailure(
-                    "Approval not received within " + approvalTime + " seconds",
+                    "Customer acknowledgment not received within " + approvalTime + " seconds",
                     "ApprovalTimeout"
                 );
             }
         }
-
-        // Withdraw
-        upsertStep("Withdraw");
-        activities.withdraw(idempotencyKey, input.getAmount(), type);
-        updateProgress(50, 3);
 
         if (BUG.equals(type)) {
             // Simulate bug
             throw new RuntimeException("Simulated bug - fix me!");
         }
 
-        // Deposit
-        upsertStep("Deposit");
+        // Configure Service
+        upsertStep("Configure Service");
         try {
-            depositResponse = activities.deposit(idempotencyKey, input.getAmount(), type);
+            depositResponse = activities.configureService(idempotencyKey, input.getAmount(), type);
             updateProgress(75, 1);
         } catch (ActivityFailure e) {
-            // if deposit fails in an unrecoverable way, rollback the withdrawal and fail the workflow
-            log.info("Deposit failed unrecoverable error, reverting withdraw");
+            // if service configuration fails in an unrecoverable way, rollback the resource reservation and fail the workflow
+            log.info("Service configuration failed with unrecoverable error, reverting resource reservation");
 
-            // Undo Withdraw (rollback)
-            activities.undoWithdraw(input.getAmount());
+            // Undo Resource Reservation (rollback)
+            activities.undoReservation(input.getAmount());
 
             // return failure message
             String message = ((ApplicationFailure) e.getCause()).getOriginalMessage();
-            throw ApplicationFailure.newNonRetryableFailure(message, "DepositFailed");
+            throw ApplicationFailure.newNonRetryableFailure(message, "ServiceConfigurationFailed");
         }
 
-        // Send Notification
-        upsertStep("Send Notification");
-        activities.sendNotification(input);
+        // Activate Service
+        upsertStep("Activate Service");
+        activities.activateService(input);
         updateProgress(100, 1, "finished");
 
         return new TransferOutput(depositResponse);

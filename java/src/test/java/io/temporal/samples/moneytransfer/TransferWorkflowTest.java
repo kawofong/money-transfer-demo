@@ -112,8 +112,8 @@ public class TransferWorkflowTest {
 
         DepositResponse depositResponse = new DepositResponse("example-charge-id");
 
-        when(activities.withdraw(anyString(), eq(100.0f), anyString())).thenReturn("SUCCESS");
-        when(activities.deposit(anyString(), eq(100.0f), anyString())).thenReturn(depositResponse);
+        when(activities.reserveResources(anyString(), eq(100.0f), anyString())).thenReturn("RESOURCES_RESERVED");
+        when(activities.configureService(anyString(), eq(100.0f), anyString())).thenReturn(depositResponse);
         testWorkflowRule.getWorker().registerActivitiesImplementations(activities);
         testWorkflowRule.getTestEnvironment().start();
 
