@@ -134,7 +134,7 @@ public class TransferScheduler {
 
     private static String generateReferenceNumber() {
         return String.format(
-                "TRANSFER-%s-%03d",
+                "SERVICE-%s-%03d",
                 (char) (Math.random() * 26 + 'A') +
                         "" +
                         (char) (Math.random() * 26 + 'A') +

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <link href="./favicon.png" rel="icon"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Telecom Service Provisioning</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #a0a0a0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .approval-section {
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .approval-section h4 {
+            margin-bottom: 15px;
+            color: #2d3436;
+        }
+
+        .approval-list {
+            text-align: left;
+            display: inline-block;
+            margin: 15px 0;
+        }
+
+        .approval-list li {
+            margin: 8px 0;
+            color: #2d3436;
+        }
+
+
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📡 Service Provisioning</h1>
+            <p>Provision telecom services with automated workflows</p>
+        </div>
+
+        <div class="content">
+            <form id="serviceForm">
+                <div class="form-group">
+                    <label class="form-label" for="customerId">Customer ID</label>
+                    <select class="form-select" id="customerId" required>
+                        <option value="">Select Customer</option>
+                        <option value="CUST-001" selected>CUST-001 (John Smith)</option>
+                        <option value="CUST-002">CUST-002 (Sarah Johnson)</option>
+                        <option value="CUST-003">CUST-003 (Michael Brown)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="serviceType">Service Type</label>
+                    <select class="form-select" id="serviceType" required>
+                        <option value="">Select Service Type</option>
+                        <option value="Internet" selected>Internet Service</option>
+                        <option value="Mobile">Mobile Service</option>
+                        <option value="TV">TV Service</option>
+                        <option value="Bundle">Internet + TV Bundle</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="serviceLevel">Service Level</label>
+                    <select class="form-select" id="serviceLevel" required>
+                        <option value="">Select Service Level</option>
+                        <option value="Basic">Basic</option>
+                        <option value="Standard" selected>Standard</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Enterprise">Enterprise</option>
+                    </select>
+                </div>
+
+
+                <div class="form-group">
+                    <label class="form-label" for="scenario">Execution Scenario</label>
+                    <select class="form-select" id="scenario" required>
+                        <option value="HAPPY_PATH">Normal "Happy Path" Execution</option>
+                        <option value="ADVANCED_VISIBILITY">Advanced Visibility</option>
+                        <option value="HUMAN_IN_LOOP">Require Human-In-Loop Approval</option>
+                        <option value="API_DOWNTIME">API Downtime (recover on 5th attempt)</option>
+                        <option value="BUG_IN_WORKFLOW">Bug in Workflow (recoverable failure)</option>
+                        <option value="INVALID_ACCOUNT">Invalid Account (unrecoverable failure)</option>
+                    </select>
+                </div>
+
+                <button class="btn" type="submit" id="provisionBtn">
+                    🚀 Provision Service
+                </button>
+            </form>
+
+            <!-- Status Section -->
+            <div id="statusSection" class="status-section hidden">
+                <h3>Service Provisioning Status</h3>
+                <div class="status-item">
+                    <span class="status-label">Workflow ID:</span>
+                    <span id="workflowId">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Status:</span>
+                    <span id="status">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Progress:</span>
+                    <span id="progress">0</span>%
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar" style="width: 0%"></div>
+                </div>
+
+                <div id="approvalSection" class="approval-section hidden">
+                    <h4>🔔 Customer Action Required</h4>
+                    <p>Please confirm that you have completed the equipment setup:</p>
+                    <ul class="approval-list">
+                        <li>• Plugged in your modem/router</li>
+                        <li>• Activated your SIM card (if applicable)</li>
+                        <li>• Verified equipment is powered on</li>
+                    </ul>
+                    <button class="btn" id="approveBtn">
+                        ✅ Confirm Equipment Setup Complete
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentWorkflowId = null;
+        let statusInterval = null;
+
+
+        // Form submission
+        document.getElementById('serviceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                customerId: document.getElementById('customerId').value,
+                serviceType: document.getElementById('serviceType').value,
+                serviceLevel: document.getElementById('serviceLevel').value,
+                scenario: document.getElementById('scenario').value
+            };
+
+            const btn = document.getElementById('provisionBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Provisioning...';
+
+            fetch('/runServiceProvisioning', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                currentWorkflowId = data.serviceId;
+                document.getElementById('workflowId').textContent = currentWorkflowId;
+                document.getElementById('statusSection').classList.remove('hidden');
+
+                // Start polling for status
+                startStatusPolling();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error starting service provisioning: ' + error.message);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = '🚀 Provision Service';
+            });
+        });
+
+        function startStatusPolling() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+
+            statusInterval = setInterval(() => {
+                if (currentWorkflowId) {
+                    checkWorkflowStatus(currentWorkflowId);
+                }
+            }, 2000);
+        }
+
+        function checkWorkflowStatus(workflowId) {
+            fetch('/runServiceProvisioningQuery', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ workflowId: workflowId })
+            })
+            .then(response => response.json())
+            .then(status => {
+                document.getElementById('status').textContent = status.serviceState;
+                document.getElementById('progress').textContent = status.progressPercentage;
+                document.getElementById('progressBar').style.width = status.progressPercentage + '%';
+
+                const approvalSection = document.getElementById('approvalSection');
+
+                if (status.serviceState === 'waiting') {
+                    approvalSection.classList.remove('hidden');
+                } else {
+                    approvalSection.classList.add('hidden');
+                }
+
+                if (status.serviceState === 'finished' || status.progressPercentage >= 100) {
+                    clearInterval(statusInterval);
+                    statusInterval = null;
+                }
+            })
+            .catch(error => {
+                console.error('Error checking status:', error);
+            });
+        }
+
+        // Approval button
+        document.getElementById('approveBtn').addEventListener('click', function() {
+            if (currentWorkflowId) {
+                fetch('/approveServiceActivation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ workflowId: currentWorkflowId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('approvalSection').classList.add('hidden');
+                })
+                .catch(error => {
+                    console.error('Error sending approval:', error);
+                    alert('Error sending approval: ' + error.message);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

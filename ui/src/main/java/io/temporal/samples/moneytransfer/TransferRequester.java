@@ -9,6 +9,8 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
 import io.temporal.samples.moneytransfer.helper.ServerInfo;
 import io.temporal.samples.moneytransfer.model.ExecutionScenario;
+import io.temporal.samples.moneytransfer.model.ServiceProvisioningInput;
+import io.temporal.samples.moneytransfer.model.ServiceProvisioningStatus;
 import io.temporal.samples.moneytransfer.model.TransferInput;
 import io.temporal.samples.moneytransfer.model.TransferOutput;
 import io.temporal.samples.moneytransfer.model.TransferStatus;
@@ -42,6 +44,18 @@ public class TransferRequester {
         return result;
     }
 
+    public static ServiceProvisioningStatus runServiceProvisioningQuery(String workflowId) throws FileNotFoundException, SSLException {
+        WorkflowClient client = TemporalClient.get();
+        System.out.println("Workflow STATUS: " + getWorkflowStatus(workflowId));
+
+        WorkflowStub workflowStub = client.newUntypedWorkflowStub(workflowId);
+        ServiceProvisioningStatus result = workflowStub.query("serviceStatus", ServiceProvisioningStatus.class);
+        if ("WORKFLOW_EXECUTION_STATUS_FAILED".equals(getWorkflowStatus(workflowId))) {
+            result.setWorkflowStatus("FAILED");
+        }
+        return result;
+    }
+
     public static void runApproveSignal(String workflowId) {
         try {
             WorkflowClient client = TemporalClient.get();
@@ -68,6 +82,22 @@ public class TransferRequester {
         return referenceNumber;
     }
 
+    public static String runServiceProvisioningWorkflow(ServiceProvisioningInput serviceInput, ExecutionScenario scenario)
+            throws FileNotFoundException, SSLException {
+        String referenceNumber = generateReferenceNumber(); // random reference number
+        WorkflowClient client = TemporalClient.get();
+        final String TASK_QUEUE = ServerInfo.getTaskqueue();
+        String workflowType = scenario.getWorkflowType();
+        WorkflowOptions options = WorkflowOptions.newBuilder()
+                .setWorkflowId(referenceNumber)
+                .setTaskQueue(TASK_QUEUE)
+                .build();
+        WorkflowStub serviceProvisioningWorkflow = client.newUntypedWorkflowStub(workflowType, options);
+        serviceProvisioningWorkflow.start(serviceInput);
+        System.out.printf("\n\nService Provisioning requested for customer: %s, service type: %s, service level: %s\n", serviceInput.getCustomerId(), serviceInput.getServiceType(), serviceInput.getServiceLevel());
+        return referenceNumber;
+    }
+
     @SuppressWarnings("CatchAndPrintStackTrace")
     public static void main(String[] args) throws Exception {
         int amountCents = 45; // amount to transfer
@@ -78,7 +108,7 @@ public class TransferRequester {
 
     private static String generateReferenceNumber() {
         return String.format(
-                "TRANSFER-%s-%03d",
+                "SERVICE-%s-%03d",
                 (char) (Math.random() * 26 + 'A') +
                         "" +
                         (char) (Math.random() * 26 + 'A') +

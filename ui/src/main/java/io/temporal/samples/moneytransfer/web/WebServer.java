@@ -33,6 +33,13 @@ public class WebServer {
             ctx.json(new AbstractMap.SimpleEntry<>("transferId", transferId));
         });
 
+        app.post("/runServiceProvisioning", ctx -> {
+            ServiceUXParameters serviceParams = ctx.bodyAsClass(ServiceUXParameters.class);
+            ServiceProvisioningInput serviceInput = serviceParams.toServiceProvisioningInput();
+            String serviceId = runServiceProvisioningWorkflow(serviceInput, serviceParams.getScenario());
+            ctx.json(new AbstractMap.SimpleEntry<>("serviceId", serviceId));
+        });
+
         app.post("/scheduleWorkflow", ctx -> {
             ScheduleParameters scheduleParameters = ctx.bodyAsClass(ScheduleParameters.class);
             String transferId = runSchedule(scheduleParameters);
@@ -45,6 +52,14 @@ public class WebServer {
             String workflowId = workflowIdObj.getWorkflowId();
             TransferStatus transferState = runQuery(workflowId);
             ctx.json(transferState);
+        });
+
+        app.post("/runServiceProvisioningQuery", ctx -> {
+            // get workflowId from request POST body
+            WorkflowId workflowIdObj = ctx.bodyAsClass(WorkflowId.class);
+            String workflowId = workflowIdObj.getWorkflowId();
+            ServiceProvisioningStatus serviceState = runServiceProvisioningQuery(workflowId);
+            ctx.json(serviceState);
         });
 
         app.post("/getWorkflowOutcome", ctx -> {
@@ -79,6 +94,14 @@ public class WebServer {
         });
 
         app.post("/approveTransfer", ctx -> {
+            // get workflowId from request POST body
+            WorkflowId workflowIdObj = ctx.bodyAsClass(WorkflowId.class);
+            String workflowId = workflowIdObj.getWorkflowId();
+            runApproveSignal(workflowId);
+            ctx.result("{\"signal\": \"sent\"}");
+        });
+
+        app.post("/approveServiceActivation", ctx -> {
             // get workflowId from request POST body
             WorkflowId workflowIdObj = ctx.bodyAsClass(WorkflowId.class);
             String workflowId = workflowIdObj.getWorkflowId();

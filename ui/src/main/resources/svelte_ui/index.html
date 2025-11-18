@@ -17,6 +17,25 @@
       0% { background-position: 0 -1rem; }
       100% { background-position: 0 0; }
     }
+    .status-card {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .waiting-approval {
+      background: #fff3cd;
+      border-color: #ffeaa7;
+    }
+    .approval-section {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 20px 0;
+      text-align: center;
+    }
 </style>
 <html lang="en">
 <head>
@@ -57,6 +76,9 @@
                         width="200px">
                     <h2 class="text-xl font-medium" style="margin-top: -40px;"></h2></div>
                 <h2 class="text-2xl flex items-center gap-1">Transfer Money</h2>
+
+                <!-- Money Transfer Form Section -->
+                <div id="moneyTransferSection" class="form-section">
                 <div class="sm:w-1/2 w-full border border-gray-200 p-4 rounded-md"><label
                         class="block text-sm font-medium text-gray-700"
                         for="from-account">From
@@ -98,13 +120,36 @@
                     <label for="schedule-checkbox" style="font-size: 1.0em;">Schedule a recurring transfer</label></div>
 
                 <div class="">
-                    <button class="button primary undefined s-FenSIQCdFdFd" type="button">
+                    <button class="button primary undefined s-FenSIQCdFdFd" type="button" id="transferButton">
                         Transfer
                     </button>
                 </div>
                 <br>
+                </div>
 
-                <h2>Transfer History (1h)</h2>
+
+                <!-- Status Section (shared between both modes) -->
+                <div id="statusSection" style="display: none;">
+                    <h3 id="statusTitle">Workflow Status</h3>
+                    <div class="status-card" id="statusCard">
+                        <div><strong>Workflow ID:</strong> <span id="workflowId"></span></div>
+                        <div><strong>Status:</strong> <span id="status"></span></div>
+                        <div><strong>Progress:</strong> <span id="progress">0</span>%</div>
+                        <div class="progress-bar">
+                            <div class="progress" id="progressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div id="approvalSection" class="approval-section" style="display: none;">
+                        <h4>🔔 Customer Action Required</h4>
+                        <p id="approvalMessage">Please confirm that you have completed the required setup.</p>
+                        <button class="button primary undefined s-FenSIQCdFdFd" id="approveBtn">
+                            Confirm Setup Complete
+                        </button>
+                    </div>
+                </div>
+
+                <h2 id="historyTitle">Transfer History (1h)</h2>
                 <table class="w-full md:w-1/2 leading-normal mx-auto">
                     <thead>
                     <tr>
@@ -114,10 +159,19 @@
                         <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                             Status
                         </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Amount
+                        </th>
                     </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody id="workflowTableBody"></tbody>
                 </table>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="/services.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); transition: transform 0.2s ease;">
+                        📡 Try Service Provisioning Demo
+                    </a>
+                </div>
 
                 <h6><a href="https://github.com/temporal-sa/money-transfer-demo" target="_blank"><img
                         alt="Source Code" class="w-8 h-auto" src="/_app/immutable/assets/github-mark.7a0dd11e.svg"></a>
@@ -132,6 +186,150 @@
 
 
     <script>
+        let currentWorkflowId = null;
+        let statusInterval = null;
+
+        // Load server info
+        fetch('/serverinfo')
+            .then(response => response.json())
+            .then(data => {
+                const serverInfoDiv = document.querySelector('.px-6.py-3.bg-gray-100.text-center');
+                if (serverInfoDiv) {
+                    serverInfoDiv.innerHTML = `
+                        <p class="text-gray-400 text-sm">Temporal Server</p>
+                        <p class="text-gray-400 text-sm">${data.temporalServerAddress || 'undefined'}</p>
+                        <p class="text-gray-400 text-sm">Namespace: ${data.namespace || 'undefined'}</p>
+                    `;
+                }
+            })
+            .catch(error => console.error('Error loading server info:', error));
+
+        // Load workflow list
+        function loadWorkflowList() {
+            fetch('/listWorkflows')
+                .then(response => response.json())
+                .then(workflows => {
+                    const tbody = document.getElementById('workflowTableBody');
+                    tbody.innerHTML = '';
+                    workflows.forEach(workflow => {
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td class="px-5 py-3 border-b border-gray-200 text-sm">${workflow.workflowId}</td>
+                            <td class="px-5 py-3 border-b border-gray-200 text-sm">${workflow.status}</td>
+                            <td class="px-5 py-3 border-b border-gray-200 text-sm">${workflow.amount || 'N/A'}</td>
+                        `;
+                    });
+                })
+                .catch(error => console.error('Error loading workflows:', error));
+        }
+
+        // Initial load
+        loadWorkflowList();
+
+        // Money Transfer form submission
+        document.getElementById('transferButton').addEventListener('click', function() {
+            const formData = {
+                amount: parseInt(document.getElementById('amount').value),
+                scenario: document.getElementById('simulate').value
+            };
+
+            this.disabled = true;
+            this.textContent = 'Processing...';
+
+            fetch('/runWorkflow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                currentWorkflowId = data.transferId;
+                document.getElementById('workflowId').textContent = currentWorkflowId;
+                document.getElementById('statusSection').style.display = 'block';
+                document.getElementById('statusTitle').textContent = 'Transfer Status';
+                document.getElementById('approvalMessage').textContent = 'Please confirm that you want to proceed with this transfer.';
+                document.getElementById('approveBtn').textContent = 'Approve Transfer';
+                startStatusPolling();
+                loadWorkflowList();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error starting transfer: ' + error.message);
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.textContent = 'Transfer';
+            });
+        });
+
+
+        function startStatusPolling() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+
+            statusInterval = setInterval(() => {
+                if (currentWorkflowId) {
+                    checkWorkflowStatus(currentWorkflowId);
+                }
+            }, 2000);
+        }
+
+        function checkWorkflowStatus(workflowId) {
+            fetch('/runQuery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ workflowId: workflowId })
+            })
+            .then(response => response.json())
+            .then(status => {
+                document.getElementById('status').textContent = status.transferState;
+                document.getElementById('progress').textContent = status.progress;
+                document.getElementById('progressBar').style.width = status.progress + '%';
+
+                const statusCard = document.getElementById('statusCard');
+                const approvalSection = document.getElementById('approvalSection');
+
+                if (status.transferState === 'waiting') {
+                    statusCard.classList.add('waiting-approval');
+                    approvalSection.style.display = 'block';
+                } else {
+                    statusCard.classList.remove('waiting-approval');
+                    approvalSection.style.display = 'none';
+                }
+
+                if (status.transferState === 'finished' || status.progress >= 100) {
+                    clearInterval(statusInterval);
+                    statusInterval = null;
+                    loadWorkflowList();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking status:', error);
+            });
+        }
+
+        // Approval button
+        document.getElementById('approveBtn').addEventListener('click', function() {
+            if (currentWorkflowId) {
+                fetch('/approveTransfer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ workflowId: currentWorkflowId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('approvalSection').style.display = 'none';
+                    document.getElementById('statusCard').classList.remove('waiting-approval');
+                })
+                .catch(error => {
+                    console.error('Error sending approval:', error);
+                    alert('Error sending approval: ' + error.message);
+                });
+            }
+        });
+
+        // Initialize Svelte components first, then our custom functionality
         {
             __sveltekit_gwo2qf = {
                 base: new URL(".", location).pathname.slice(0, -1),
@@ -139,7 +337,6 @@
             };
 
             const element = document.currentScript.parentElement;
-
             const data = [null,null];
 
             Promise.all([
@@ -152,6 +349,12 @@
                     form: null,
                     error: null
                 });
+
+                // Initialize our custom functionality after Svelte is loaded
+                setTimeout(() => {
+                    console.log('Initializing custom functionality after Svelte...');
+                    initializePage();
+                }, 1000);
             });
         }
     </script>
