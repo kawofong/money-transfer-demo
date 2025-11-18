@@ -5,14 +5,11 @@ import io.temporal.common.converter.EncodedValues;
 import io.temporal.failure.ActivityFailure;
 import io.temporal.failure.ApplicationFailure;
 import io.temporal.samples.moneytransfer.activities.ServiceProvisioningActivities;
-import io.temporal.samples.moneytransfer.model.DepositResponse;
 import io.temporal.samples.moneytransfer.model.ServiceProvisioningInput;
-import io.temporal.samples.moneytransfer.model.TransferInput;
 import io.temporal.samples.moneytransfer.model.ServiceProvisioningOutput;
-import io.temporal.samples.moneytransfer.model.TransferOutput;
-import io.temporal.samples.moneytransfer.model.TransferStatus;
 import io.temporal.samples.moneytransfer.model.ServiceProvisioningStatus;
 import io.temporal.workflow.DynamicWorkflow;
+import io.temporal.workflow.TimerOptions;
 import io.temporal.workflow.Workflow;
 import java.time.Duration;
 import org.slf4j.Logger;
@@ -35,7 +32,7 @@ public class ServiceProvisioningWorkflowScenarios implements DynamicWorkflow {
     private int progress = 0;
     private String serviceState = "starting";
 
-    private int approvalTime = 30;
+    private int approvalTime = 60;
     private boolean approved = false;
 
     @Override
@@ -122,7 +119,11 @@ public class ServiceProvisioningWorkflowScenarios implements DynamicWorkflow {
 
     private void updateProgress(int progress, int sleep, String serviceState) {
         if (sleep > 0) {
-            Workflow.sleep(Duration.ofSeconds(sleep));
+            Workflow.newTimer(Duration.ofSeconds(sleep),
+                TimerOptions.newBuilder()
+                    .setSummary("Processing time")
+                    .build())
+            .get();
         }
         this.serviceState = serviceState;
         this.progress = progress;

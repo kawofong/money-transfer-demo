@@ -4,6 +4,7 @@ import io.temporal.samples.moneytransfer.activities.ServiceProvisioningActivitie
 import io.temporal.samples.moneytransfer.model.ServiceProvisioningInput;
 import io.temporal.samples.moneytransfer.model.ServiceProvisioningOutput;
 import io.temporal.samples.moneytransfer.model.ServiceProvisioningStatus;
+import io.temporal.workflow.TimerOptions;
 import io.temporal.workflow.Workflow;
 import org.slf4j.Logger;
 
@@ -57,7 +58,11 @@ public class ServiceProvisioningWorkflowImpl implements ServiceProvisioningWorkf
 
     private void updateProgress(int progress, int sleep, String serviceState) {
         if (sleep > 0) {
-            Workflow.sleep(Duration.ofSeconds(sleep));
+            Workflow.newTimer(Duration.ofSeconds(sleep),
+                TimerOptions.newBuilder()
+                    .setSummary("Processing time")
+                    .build())
+            .get();
         }
         this.serviceState = serviceState;
         this.progress = progress;

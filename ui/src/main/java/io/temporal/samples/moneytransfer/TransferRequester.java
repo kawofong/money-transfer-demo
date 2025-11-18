@@ -66,6 +66,16 @@ public class TransferRequester {
         }
     }
 
+    public static void runApproveServiceActivationSignal(String workflowId) {
+        try {
+            WorkflowClient client = TemporalClient.get();
+            WorkflowStub workflowStub = client.newUntypedWorkflowStub(workflowId);
+            workflowStub.signal("approveService");
+        } catch (Exception e) {
+            System.out.println("Exception: " + e);
+        }
+    }
+
     public static String runWorkflow(TransferInput transferInput, ExecutionScenario scenario)
             throws FileNotFoundException, SSLException {
         String referenceNumber = generateReferenceNumber(); // random reference number

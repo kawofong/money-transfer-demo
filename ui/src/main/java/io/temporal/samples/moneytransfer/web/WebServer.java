@@ -105,7 +105,7 @@ public class WebServer {
             // get workflowId from request POST body
             WorkflowId workflowIdObj = ctx.bodyAsClass(WorkflowId.class);
             String workflowId = workflowIdObj.getWorkflowId();
-            runApproveSignal(workflowId);
+            runApproveServiceActivationSignal(workflowId);
             ctx.result("{\"signal\": \"sent\"}");
         });
 
